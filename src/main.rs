@@ -1,70 +1,96 @@
-
-// struct User{
-//     name:String,
-//     balance:(f32,String),
-//     }
-// impl User{
-//     fn print_name(&self){
-//         println!("{}",self.name);
-//     }
-// }
-// fn main() {
-// let user=User{
-//     name:"et".to_owned(),
-//     balance:(99.99,"SGD".to_owned()),
-// };
-// user.print_name();
-// println!("{},{}",user.balance.0,user.balance.1);
-// }
-// fn main(){
-// let user_vec: Vec<String> = vec![
-// "john".to_owned(),
-// "mary".to_owned(),
-// "simon".to_owned(),
-// "john".to_owned(),
-// "kelly".to_owned(),
-// "harry".to_owned(),
-// ];
-// let mut counter = 0;
-// // TODO: for loop to count number of john values
-// for name in &user_vec { // loop every name in vector
-//     if name == "john" { // if name name equals john
-//     counter += 1; // increment counter by 1
-//     }
-//     }
-// println!("{} johns in {:?}", counter, user_vec);
-// }
-struct User {
-    name: String,
-    balance: (f32, String)
+#[derive(Debug,PartialEq)]
+enum PaymentType {
+    DigitalToken,
+    Cash,
     }
-    impl User {
-    fn print_user_detail(&self) {
-    println!("Name: {}, Balance: {:?}",
-    self.name, self.balance)
-    }
-    }
-
-    fn main() {
-        let mut user = User {
-        name: "John".to_owned(),
-        balance: (30000.0, "SGD".to_owned()),
-        };
-        let mut counter =0;
-        for _ in 1..=10{
-            counter +=1;
-            if counter >10{
-                break;
+    impl PaymentType{
+        fn description(&self){
+            match self{
+                PaymentType::DigitalToken=>println!("Digital token"),
+                PaymentType::Cash=>println!("Cash"),
             }
-            accrue_interest(&mut user, 3.0);
-            println!("{}",counter);
         }
-        
+    }
+    #[derive(Debug)]
+    struct Seller{
+        payment_type: PaymentType,
+        price:f32,
+        balance:f32,
+    }
+    #[derive(Debug)]
+    struct Buyer{
+        name:String,
+        payment_type:PaymentType,
+        balance:f32,
+    }
+    #[derive(Debug)]
+    struct BuyerGroup{
+        members:Vec<Buyer>,
+    }
+    impl BuyerGroup{
+        fn add_member(&mut self, h: Buyer) {
+            self.members.push(h);
+                }
+    }
+    impl BuyerGroup{
+        fn find_buyer(&self,payment_type: &PaymentType) -> i32 {
+            println!("searching for buyer with payment type {:?}",payment_type);
+            let mut pos = 0;
+            for i in &self.members{
+                if i.payment_type==*payment_type{
+                    println!("matching buyer using payment type {:?} was found at index{}",payment_type,pos);
+                    println!("{:?}",i);
+                    return pos;
+                }
+                pos +=1;
+            }
+            println!("buy with payment type {:?} not found",payment_type);
+            return -1;
         }
-        fn accrue_interest( user: &mut User, interest: f32) {
-        user.balance.0 = user.balance.0 + (user.balance.0
-        * interest / 100.0);
-        user.print_user_detail();
+        fn buy(&mut self,buyer_index: i32, seller:&mut Seller){
+            let mut buyer = &mut self.members[buyer_index as usize];
+            loop{
+                if buyer.balance >= seller.price{
+                    seller.balance += seller.price;
+                    buyer.balance-=seller.price;
+                    println!("{} balance: {}. seller balance :{}",buyer.name,buyer.balance,seller.balance);
+                }else{
+                    println!("{} balance {}insufficient. Seller balance:{}",buyer.name,buyer.balance,seller.balance);
+                    break;
+                }
+            }
         }
+    }
     
-        
+    
+    fn main() {
+        let buyer1 = Buyer {
+            name: "John".to_owned(),
+            payment_type: PaymentType::DigitalToken,
+            balance: 100.00,
+            };
+            println!("{:?}",buyer1);
+            let buyer2 = Buyer {
+            name: "Sally".to_owned(),
+            payment_type: PaymentType::Cash,
+            balance: 100.00,
+            };
+            println!("{:?}",buyer2);
+            let mut buyer_group =BuyerGroup{
+                members: Vec::new(),
+            };
+            buyer_group.add_member(buyer1);
+            buyer_group.add_member(buyer2);
+            println!("{:?}",buyer_group);
+            let mut seller = Seller {
+                payment_type: PaymentType::DigitalToken,
+                price: 10.0,
+                balance: 0.0,
+                };
+                println!("{:?}",seller);
+                let buyer_index = buyer_group.find_buyer(&seller.payment_type);
+                if buyer_index >= 0{
+                    buyer_group.buy(buyer_index,&mut seller);
+                }
+
+    }
